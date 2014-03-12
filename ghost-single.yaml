@@ -1,0 +1,241 @@
+heat_template_version: 2013-05-23
+
+description: |
+  This is a Heat template to deploy a single Linux server running Ghost CMS.
+
+parameters:
+
+  # Server settings
+  server_hostname:
+    description: Server Name
+    type: string
+    default: Ghost
+    constraints:
+    - length:
+        min: 1
+        max: 64
+    - allowed_pattern: "^[a-zA-Z][a-zA-Z0-9-]*$"
+      description: |
+        Must begin with a letter and contain only alphanumeric characters.
+
+  image:
+    description: Server Image
+    type: string
+    default: Ubuntu 12.04 LTS (Precise Pangolin)
+    constraints:
+    - allowed_values:
+      - Ubuntu 12.04 LTS (Precise Pangolin)
+      description: Must be a supported operating system.
+
+  flavor:
+    description: Rackspace Cloud Server flavor
+    type: string
+    default: 4 GB Performance
+    constraints:
+    - allowed_values:
+      - 1 GB Performance
+      - 2 GB Performance
+      - 4 GB Performance
+      - 8 GB Performance
+      - 15 GB Performance
+      - 30 GB Performance
+      - 1GB Standard Instance
+      - 2GB Standard Instance
+      - 4GB Standard Instance
+      - 8GB Standard Instance
+      - 15GB Standard Instance
+      - 30GB Standard Instance
+      description: |
+        Must be a valid Rackspace Cloud Server flavor for the region you have
+        selected to deploy into.
+
+  # Ghost settings
+  domain:
+    description: Domain to be used with Ghost site
+    type: string
+    default: "ghost.example.com"
+    constraints:
+    - allowed_pattern: "^[a-zA-Z0-9.-]{1,255}.[a-zA-Z]{2,15}$"
+      description: Must be a valid domain name
+
+  # Database and system user configuration
+  database_name:
+    description: Ghost database name
+    type: string
+    default: ghost
+    constraints:
+    - allowed_pattern: "^[0-9a-zA-Z$_]{1,64}$"
+      description: |
+        Maximum length of 64 characters, may only contain letters, numbers, and
+        underscores.
+
+  username:
+    description: "Login name for both the database and system user"
+    type: string
+    default: ghost
+    constraints:
+    - allowed_pattern: "^(.){1,16}$"
+      description: |
+        Must be shorter than 16 characters, this is due to MySQL's maximum
+        username length.
+
+  # SSH Keypair naming
+  ssh_keypair_name:
+    description: "keypair name to register with Nova for the root SSH key"
+    type: string
+    constraints:
+    - allowed_pattern: "^(.){1,64}$"
+      description: "Must be shorter than 64 characters or fewer."
+
+resources:
+  # Random password generation
+  user_password:
+    type: "OS::Heat::RandomString"
+    properties:
+      length: 16
+      sequence: lettersdigits
+
+  database_password:
+    type: "OS::Heat::RandomString"
+    properties:
+      length: 16
+      sequence: lettersdigits
+
+  mysql_root_password:
+    type: "OS::Heat::RandomString"
+    properties:
+      length: 16
+      sequence: lettersdigits
+
+  mysql_repl_password:
+    type: "OS::Heat::RandomString"
+    properties:
+      length: 16
+      sequence: lettersdigits
+
+  mysql_debian_password:
+    type: "OS::Heat::RandomString"
+    properties:
+      length: 16
+      sequence: lettersdigits
+
+  # SSH key
+  ssh_key:
+    type: "OS::Nova::KeyPair"
+    properties:
+      name: { get_param: ssh_keypair_name }
+      save_private_key: true
+
+  # Server resources
+  ghost_server:
+    type: "Rackspace::Cloud::Server"
+    properties:
+      name: { get_param: server_hostname }
+      flavor: { get_param: flavor }
+      image: { get_param: image }
+      key_name: { get_resource: ssh_key }
+
+  # Chef resources
+  bootstrap_server:
+    type: "OS::Heat::ChefSolo"
+    properties:
+      username: root
+      private_key: { get_attr: [ssh_key, private_key] }
+      host: { get_attr: [ghost_server, accessIPv4] }
+      Berksfile: |
+        #!/usr/bin/env ruby
+        # ^syntax detection
+
+        site :opscode
+
+        cookbook 'apt'
+        cookbook 'build-essential'
+      node:
+        run_list: ["recipe[apt]",
+                   "recipe[build-essential]"]
+  ghost_setup:
+    type: "OS::Heat::ChefSolo"
+    depends_on: bootstrap_server
+    properties:
+      username: root
+      private_key: { get_attr: [ssh_key, private_key] }
+      host: { get_attr: [ghost_server, accessIPv4] }
+      Berksfile: |
+        #!/usr/bin/env ruby
+        # ^syntax detection
+
+        site :opscode
+
+        cookbook 'apt'
+        cookbook 'ark'
+        cookbook 'database'
+        cookbook 'firewall',
+          git: 'https://github.com/opscode-cookbooks/firewall'
+        cookbook 'git'
+        cookbook 'hollandbackup',
+          :git => 'https://github.com/brint/hollandbackup'
+        cookbook 'mysql'
+        cookbook 'nginx'
+        cookbook 'nodejs',
+          git: 'https://github.com/mdxp/nodejs-cookbook.git'
+        cookbook 'npm',
+          git: 'https://github.com/balbeko/chef-npm.git'
+        cookbook 'postfix'
+        cookbook 'sudo',
+          git: 'https://github.com/opscode-cookbooks/sudo.git'
+        cookbook 'ghost',
+          git: 'https://github.com/ryandub/chef-ghost.git'
+      node:
+        authorization:
+          sudo:
+            users: [ { get_param: username } ]
+        ghost:
+          db_admin_password: { get_attr: [mysql_root_password, value] }
+          db_user: { get_param: username }
+          db_password: { get_attr: [database_password, value] }
+          password: { get_attr: [user_password, value] }
+        hollandbackup:
+          main:
+            backup_directory: "/var/lib/mysqlbackup"
+            mysqldump:
+              user: "root"
+              host: "localhost"
+              password: { get_attr: [mysql_root_password, value] }
+        mysql:
+          bind_address: "127.0.0.1"
+          server_root_password: { get_attr: [mysql_root_password, value] }
+          server_repl_password: { get_attr: [mysql_repl_password, value] }
+          server_debian_password: { get_attr: [mysql_debian_password, value] }
+          remove_test_database: true
+          remove_anonymous_users: true
+        run_list: ["recipe[apt]",
+                   "recipe[postfix]",
+                   "recipe[mysql::server]",
+                   "recipe[hollandbackup]",
+                   "recipe[hollandbackup::mysqldump]",
+                   "recipe[hollandbackup::main]",
+                   "recipe[hollandbackup::backupsets]",
+                   "recipe[hollandbackup::cron]",
+                   "recipe[ghost::database]",
+                   "recipe[ghost::default]",
+                   "recipe[ghost::nginx]",
+                   "recipe[ghost::firewall]"]
+
+outputs:
+  private_key:
+    value: { get_attr: [ssh_key, private_key] }
+
+  server_ip:
+    value: { get_attr: [ghost_server, accessIPv4] }
+
+  ghost_user:
+    value: { get_param: username }
+
+  ghost_user_password:
+    value: { get_attr: [user_password, value] }
+
+  ghost_database_password:
+    value: { get_attr: [database_password, value] }
+
+  mysql_root_password:
+    value: { get_attr: [mysql_root_password, value] }
