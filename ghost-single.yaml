@@ -173,7 +173,7 @@ resources:
           git: 'https://github.com/opscode-cookbooks/firewall'
         cookbook 'git'
         cookbook 'hollandbackup',
-          :git => 'https://github.com/brint/hollandbackup'
+          git: 'https://github.com/brint/hollandbackup'
         cookbook 'mysql'
         cookbook 'nginx'
         cookbook 'nodejs',
@@ -186,8 +186,8 @@ resources:
         cookbook 'ghost',
           git: 'https://github.com/ryandub/chef-ghost.git'
         cookbook 'cron',
-          :git => 'https://github.com/opscode-cookbooks/cron',
-          :ref => '8007fc9ef6083e04554d729b4ffaef4e7ca81d7a'
+          git: 'https://github.com/opscode-cookbooks/cron',
+          ref: '8007fc9ef6083e04554d729b4ffaef4e7ca81d7a'
       node:
         authorization:
           sudo:
