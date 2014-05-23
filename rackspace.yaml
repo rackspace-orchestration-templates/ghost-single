@@ -7,3 +7,66 @@ flavor-weight: 1
 reach-info:
   tattoo: https://0b5294b243620310a700-e388a7f3aba385a925111b1fc6f680d4.ssl.cf2.rackcdn.com/ghost-tattoo.png
   icon-20x20: https://0b5294b243620310a700-e388a7f3aba385a925111b1fc6f680d4.ssl.cf2.rackcdn.com/ghost-icon-20x20.png
+abstract: |
+  [Ghost](http://ghost.org/about/) installed with
+  [Nginx](http://wiki.nginx.org/Main/), [Node.js](http://nodejs.org/), and
+  [MySQL 5.5](http://www.mysql.com/about/).
+instructions: |
+  #### Accessing Your Deployment
+
+  If you provided a domain name that is associated with your Rackspace Cloud
+  account and chose to create DNS records, you should be able to navigate to
+  the provided domain name in your browser. If DNS has not been configured yet,
+  please refer to this
+  [documentation](http://www.rackspace.com/knowledge_center/article/how-do-i-modify-my-hosts-file)
+  on how to setup your Hosts file to allow your browser to access your
+  Deployment via domain name.
+
+  To SSH into your server as "root", please use the SSH private key provided in
+  the deployment's secrets. Please refer to our Knowledge Center for
+  instructions on how to use SSH keys on
+  [Linux/Mac](http://www.rackspace.com/knowledge_center/article/logging-in-with-a-ssh-private-key-on-linuxmac)
+  or
+  [Windows](http://www.rackspace.com/knowledge_center/article/logging-in-with-a-ssh-private-key-on-windows).
+
+  You may also SSH into the server as the "ghost" user with the "ghost User
+  Password" provided in the deployment's secrets. Once logged in as this user,
+  you can use "sudo" to perform commands as root. The following commands will
+  assume you are using the "ghost" user and will use "sudo". If you prefer to
+  use "root", please drop the "sudo" from the examples.
+
+  Once you have SSH'd into your server, you will find Ghost installed in
+  /var/www/vhosts/<domain_name>. There is an
+  [Upstart](http://upstart.ubuntu.com/) job configured in
+  "/etc/init/ghost.conf" to control the Ghost service. You can start or stop
+  the Ghost service by running "sudo start ghost" or "sudo stop ghost". You can
+  find logs for the Ghost service in "/var/log/upstart/ghost.log". Ghost runs
+  on port 2368; however, Nginx is configured to listen on port 80 and 443 (if
+  SSL was configured) and pass requests to 2368. You can find the Nginx
+  configuration for Ghost in "/etc/nginx/sites-available/ghost.conf".
+
+  #### Getting Started
+
+  Ghost is a new blogging platform dedicated to providing a simple, easy to use
+  approach to blogging. Ghost allows you to write and publish your own blog,
+  giving you the tools to make it easy and even fun to do. It's simple,
+  elegant, and designed so that you can spend less time messing with making
+  your blog work - and more time blogging.
+
+  The first step with your new blog is to navigate to `/ghost/signup` where you
+  will create the your user. Ghost currently only supports one user at this
+  time. After filling out this info, you will be redirected to the admin panel
+  where you can start customizing your blog and adding new posts. To access the
+  admin panel again, navigate to `/ghost`.
+
+  For more information on using Ghost please check out Ghost's [usage
+  forums](https://ghost.org/forum/using-ghost/).
+
+  #### Plugins
+
+  Ghost is new and is still in heavy development. However, there are already
+  some plugins and themes to help customize your experience. Checkout the Ghost
+  [Marketplace](http://marketplace.ghost.org/) for links. Users coming from
+  WordPress may also be interested in this [WordPress
+  plugin](http://wordpress.org/plugins/ghost/) to help migrate data from
+  WordPress to Ghost.
