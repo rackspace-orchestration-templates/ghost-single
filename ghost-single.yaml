@@ -3,6 +3,19 @@ heat_template_version: 2013-05-23
 description: |
   This is a Heat template to deploy a single Linux server running Ghost CMS.
 
+parameter_groups:
+
+- label: Server Settings
+  parameters:
+  - server_hostname
+  - flavor
+  - image
+
+- label: Ghost Settings
+  parameters:
+  - domain
+  - username
+
 parameters:
 
   # Server settings
@@ -79,14 +92,6 @@ parameters:
         Must be shorter than 16 characters, this is due to MySQL's maximum
         username length.
 
-  # SSH Keypair naming
-  ssh_keypair_name:
-    description: "keypair name to register with Nova for the root SSH key"
-    type: string
-    constraints:
-    - allowed_pattern: "^(.){1,64}$"
-      description: "Must be shorter than 64 characters or fewer."
-
 resources:
   # Random password generation
   user_password:
@@ -123,7 +128,7 @@ resources:
   ssh_key:
     type: "OS::Nova::KeyPair"
     properties:
-      name: { get_param: ssh_keypair_name }
+      name: { get_param: "OS::stack_id" }
       save_private_key: true
 
   # Server resources
@@ -227,18 +232,24 @@ resources:
 outputs:
   private_key:
     value: { get_attr: [ssh_key, private_key] }
+    description: "Private Key"
 
   server_ip:
     value: { get_attr: [ghost_server, accessIPv4] }
+    description: "Server IP"
 
   ghost_user:
     value: { get_param: username }
+    description: "Ghost User"
 
   ghost_user_password:
     value: { get_attr: [user_password, value] }
+    description: "Ghost Password"
 
   ghost_database_password:
     value: { get_attr: [database_password, value] }
+    description: "Ghost Database Password"
 
   mysql_root_password:
     value: { get_attr: [mysql_root_password, value] }
+    description: "MySQL Root Password"
