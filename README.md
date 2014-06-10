@@ -28,7 +28,7 @@ Here is an example of how to deploy this template using the
 heat --os-username <OS-USERNAME> --os-password <OS-PASSWORD> --os-tenant-id \
   <TENANT-ID> --os-auth-url https://identity.api.rackspacecloud.com/v2.0/ \
   stack-create Ghost-Stack -f ghost-single.yaml \
-  -P server_hostname=GhostStack -P ssh_keypair_name=Ghost-SSH
+  -P server_hostname=GhostStack
 ```
 
 * For UK customers, use `https://lon.identity.api.rackspacecloud.com/v2.0/` as
@@ -58,8 +58,6 @@ the `-P` flag to specify a custom parameter.
   ghost)
 * `username`: User name to use for the system and database user. (Default:
   ghost)
-* `ssh_keypair_name`: Name of the SSH key pair to register with nova (Default:
-  none)
 
 Outputs
 =======
