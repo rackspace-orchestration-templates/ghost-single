@@ -9,7 +9,7 @@ parameter_groups:
   parameters:
   - server_hostname
   - flavor
-  - image
+  - count
 
 - label: Ghost Settings
   parameters:
@@ -31,19 +31,10 @@ parameters:
       description: |
         Must begin with a letter and contain only alphanumeric characters.
 
-  image:
-    description: Server Image
-    type: string
-    default: Ubuntu 12.04 LTS (Precise Pangolin)
-    constraints:
-    - allowed_values:
-      - Ubuntu 12.04 LTS (Precise Pangolin)
-      description: Must be a supported operating system.
-
   flavor:
     description: Rackspace Cloud Server flavor
     type: string
-    default: 4 GB Performance
+    default: 2 GB Performance
     constraints:
     - allowed_values:
       - 1 GB Performance
@@ -92,6 +83,16 @@ parameters:
         Must be shorter than 16 characters, this is due to MySQL's maximum
         username length.
 
+  count:
+    description: Number of CoreOS machines to deploy
+    type: number
+    default: 3
+    constraints:
+    - range:
+        min: 3
+        max: 12
+      description: Must be between 3 and 12 servers.
+
 resources:
   # Random password generation
   user_password:
@@ -132,111 +133,61 @@ resources:
       save_private_key: true
 
   # Server resources
-  ghost_server:
-    type: "Rackspace::Cloud::Server"
+  ghost_servers:
+    type: "OS::Heat::ResourceGroup"
     properties:
-      name: { get_param: server_hostname }
-      flavor: { get_param: flavor }
-      image: { get_param: image }
-      key_name: { get_resource: ssh_key }
+      count: { get_param: count }
+      resource_def:
+        # type: Rackspace::Cloud::Server
+        type: OS::Nova::Server
+        properties:
+          name: { get_param: server_hostname }
+          flavor: { get_param: flavor }
+          image: "67f12b74-2a3f-4a10-8afd-11bebc914c11"
+          key_name: { get_resource: ssh_key }
+          user_data_format: RAW
+          config_drive: "true"
+          user_data: |
+            #cloud-config
 
-  # Chef resources
-  bootstrap_server:
-    type: "OS::Heat::ChefSolo"
-    properties:
-      username: root
-      private_key: { get_attr: [ssh_key, private_key] }
-      host: { get_attr: [ghost_server, accessIPv4] }
-      Berksfile: |
-        #!/usr/bin/env ruby
-        # ^syntax detection
+            coreos:
+              update:
+                reboot-strategy: etcd-lock
+              etcd:
+                # generate a new token for each unique cluster from https://discovery.etcd.io/new
+                discovery: https://discovery.etcd.io/<token>
+                addr: $private_ipv4:4001
+                peer-addr: $private_ipv4:7001
+              units:
+                - name: etcd.service
+                  command: start
+                - name: fleet.service
+                  command: start
+                - name: docker-ghost.service
+                  command: start
+                  content: |
+                    [Unit]
+                    Description=ghost container
+                    Author=coreos
+                    After=docker.service
+                    Requires=docker.service
 
-        site :opscode
+                    [Service]
+                    Restart=always
+                    ExecStart=/usr/bin/docker run --name ghost -p 80:2368 dockerfile/ghost
+                    ExecStop=/usr/bin/docker stop -t 2 ghost
 
-        cookbook 'apt'
-        cookbook 'build-essential'
-      node:
-        run_list: ["recipe[apt]",
-                   "recipe[build-essential]"]
-  ghost_setup:
-    type: "OS::Heat::ChefSolo"
-    depends_on: bootstrap_server
-    properties:
-      username: root
-      private_key: { get_attr: [ssh_key, private_key] }
-      host: { get_attr: [ghost_server, accessIPv4] }
-      Berksfile: |
-        #!/usr/bin/env ruby
-        # ^syntax detection
-
-        site :opscode
-
-        cookbook 'apt'
-        cookbook 'ark'
-        cookbook 'database'
-        cookbook 'firewall',
-          git: 'https://github.com/opscode-cookbooks/firewall'
-        cookbook 'git'
-        cookbook 'hollandbackup',
-          git: 'https://github.com/brint/hollandbackup'
-        cookbook 'mysql'
-        cookbook 'nginx'
-        cookbook 'nodejs',
-          git: 'https://github.com/mdxp/nodejs-cookbook.git'
-        cookbook 'npm',
-          git: 'https://github.com/balbeko/chef-npm.git'
-        cookbook 'postfix'
-        cookbook 'sudo',
-          git: 'https://github.com/opscode-cookbooks/sudo.git'
-        cookbook 'ghost',
-          git: 'https://github.com/ryandub/chef-ghost.git'
-        cookbook 'cron',
-          git: 'https://github.com/opscode-cookbooks/cron',
-          ref: '8007fc9ef6083e04554d729b4ffaef4e7ca81d7a'
-      node:
-        authorization:
-          sudo:
-            users: [ { get_param: username } ]
-        ghost:
-          db_admin_password: { get_attr: [mysql_root_password, value] }
-          db_user: { get_param: username }
-          db_password: { get_attr: [database_password, value] }
-          password: { get_attr: [user_password, value] }
-        hollandbackup:
-          main:
-            backup_directory: "/var/lib/mysqlbackup"
-            mysqldump:
-              user: "root"
-              host: "localhost"
-              password: { get_attr: [mysql_root_password, value] }
-        mysql:
-          bind_address: "127.0.0.1"
-          server_root_password: { get_attr: [mysql_root_password, value] }
-          server_repl_password: { get_attr: [mysql_repl_password, value] }
-          server_debian_password: { get_attr: [mysql_debian_password, value] }
-          remove_test_database: true
-          remove_anonymous_users: true
-        run_list: ["recipe[apt]",
-                   "recipe[postfix]",
-                   "recipe[mysql::server]",
-                   "recipe[hollandbackup]",
-                   "recipe[hollandbackup::mysqldump]",
-                   "recipe[hollandbackup::main]",
-                   "recipe[hollandbackup::backupsets]",
-                   "recipe[hollandbackup::cron]",
-                   "recipe[ghost::database]",
-                   "recipe[ghost::default]",
-                   "recipe[ghost::nginx]",
-                   "recipe[ghost::firewall]"]
+                    [Install]
+                    WantedBy=multi-user.target
 
 outputs:
   private_key:
     value: { get_attr: [ssh_key, private_key] }
     description: "Private Key"
 
-  server_ip:
-    value: { get_attr: [ghost_server, accessIPv4] }
-    description: "Server IP"
+  server_ips:
+    value: { get_attr: [ghost_servers, accessIPv4] }
+    description: "Server IPs"
 
   ghost_user:
     value: { get_param: username }
