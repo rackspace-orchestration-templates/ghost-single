@@ -7,7 +7,6 @@ parameter_groups:
 
 - label: Server Settings
   parameters:
-  - server_hostname
   - flavor
   - image
 
@@ -16,21 +15,19 @@ parameter_groups:
   - domain
   - username
 
+- label: rax-dev-params
+  # These are parameters that will not be displayed in the portal. The purpose
+  # of these parameters are for users who are developing or testing newer or
+  # different setups. If any of these parameters are changed, there is a good
+  # chance this stack will fail to properly deploy.
+  parameters:
+  - database_name
+  - kitchen
+  - chef_version
+
 parameters:
 
   # Server settings
-  server_hostname:
-    description: Server Name
-    type: string
-    default: Ghost
-    constraints:
-    - length:
-        min: 1
-        max: 64
-    - allowed_pattern: "^[a-zA-Z][a-zA-Z0-9-]*$"
-      description: |
-        Must begin with a letter and contain only alphanumeric characters.
-
   image:
     description: Server Image
     type: string
@@ -92,6 +89,16 @@ parameters:
         Must be shorter than 16 characters, this is due to MySQL's maximum
         username length.
 
+  kitchen:
+    description: "URL for a git repo containing required cookbooks"
+    type: string
+    default: https://github.com/rackspace-orchestration-templates/ghost-single
+
+  chef_version:
+    description: Version of chef client to use
+    type: string
+    default: 11.12.8
+
 resources:
   # Random password generation
   user_password:
@@ -135,64 +142,21 @@ resources:
   ghost_server:
     type: "Rackspace::Cloud::Server"
     properties:
-      name: { get_param: server_hostname }
+      name: ghost
       flavor: { get_param: flavor }
       image: { get_param: image }
       key_name: { get_resource: ssh_key }
 
   # Chef resources
-  bootstrap_server:
-    type: "OS::Heat::ChefSolo"
-    properties:
-      username: root
-      private_key: { get_attr: [ssh_key, private_key] }
-      host: { get_attr: [ghost_server, accessIPv4] }
-      Berksfile: |
-        #!/usr/bin/env ruby
-        # ^syntax detection
-
-        site :opscode
-
-        cookbook 'apt'
-        cookbook 'build-essential'
-      node:
-        run_list: ["recipe[apt]",
-                   "recipe[build-essential]"]
   ghost_setup:
     type: "OS::Heat::ChefSolo"
-    depends_on: bootstrap_server
+    depends_on: ghost_server
     properties:
       username: root
       private_key: { get_attr: [ssh_key, private_key] }
       host: { get_attr: [ghost_server, accessIPv4] }
-      Berksfile: |
-        #!/usr/bin/env ruby
-        # ^syntax detection
-
-        site :opscode
-
-        cookbook 'apt'
-        cookbook 'ark'
-        cookbook 'database'
-        cookbook 'firewall',
-          git: 'https://github.com/opscode-cookbooks/firewall'
-        cookbook 'git'
-        cookbook 'hollandbackup',
-          git: 'https://github.com/brint/hollandbackup'
-        cookbook 'mysql'
-        cookbook 'nginx'
-        cookbook 'nodejs',
-          git: 'https://github.com/mdxp/nodejs-cookbook.git'
-        cookbook 'npm',
-          git: 'https://github.com/balbeko/chef-npm.git'
-        cookbook 'postfix'
-        cookbook 'sudo',
-          git: 'https://github.com/opscode-cookbooks/sudo.git'
-        cookbook 'ghost',
-          git: 'https://github.com/ryandub/chef-ghost.git'
-        cookbook 'cron',
-          git: 'https://github.com/opscode-cookbooks/cron',
-          ref: '8007fc9ef6083e04554d729b4ffaef4e7ca81d7a'
+      kitchen: { get_param: kitchen }
+      chef_version: { get_param: chef_version }
       node:
         authorization:
           sudo:
