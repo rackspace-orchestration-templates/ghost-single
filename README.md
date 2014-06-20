@@ -28,7 +28,7 @@ Here is an example of how to deploy this template using the
 heat --os-username <OS-USERNAME> --os-password <OS-PASSWORD> --os-tenant-id \
   <TENANT-ID> --os-auth-url https://identity.api.rackspacecloud.com/v2.0/ \
   stack-create Ghost-Stack -f ghost-single.yaml \
-  -P server_hostname=GhostStack
+  -P flavor="4 GB Performance Instance"
 ```
 
 * For UK customers, use `https://lon.identity.api.rackspacecloud.com/v2.0/` as
@@ -65,7 +65,8 @@ Once a stack comes online, use `heat output-list` to see all available outputs.
 Use `heat output-show <OUTPUT NAME>` to get the value fo a specific output.
 
 * `private_key`: SSH private that can be used to login as root to the server.
-* `server_ip`: Public IP address of the cloud server
+* `server_ip`: Public IP address of the cloud server.
+* `ghost_url`: URL to access Ghost for the first time.
 * `ghost_user`: The non-privileged user that has sudo access.
 * `ghost_user_password`: Password to use with `ghost_user` when logging in via
   SSH

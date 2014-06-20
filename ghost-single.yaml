@@ -202,6 +202,14 @@ outputs:
     value: { get_attr: [ghost_server, accessIPv4] }
     description: "Server IP"
 
+  ghost_url:
+    value:
+      str_replace:
+        template: "http://%server_ip%"
+        params:
+          "%server_ip%": { get_attr: [ ghost_server, accessIPv4 ] }
+    description: URL for accessing Ghost
+
   ghost_user:
     value: { get_param: username }
     description: "Ghost User"
