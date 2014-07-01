@@ -29,6 +29,7 @@ parameters:
 
   # Server settings
   image:
+    label: Server Image
     description: Server Image
     type: string
     default: Ubuntu 12.04 LTS (Precise Pangolin)
@@ -38,6 +39,7 @@ parameters:
       description: Must be a supported operating system.
 
   flavor:
+    label: Server Size
     description: Rackspace Cloud Server flavor
     type: string
     default: 4 GB Performance
@@ -61,6 +63,7 @@ parameters:
 
   # Ghost settings
   domain:
+    label: Site Domain
     description: Domain to be used with Ghost site
     type: string
     default: "ghost.example.com"
@@ -80,6 +83,7 @@ parameters:
         underscores.
 
   username:
+    label: Username
     description: "Login name for both the database and system user"
     type: string
     default: ghost
