@@ -30,7 +30,7 @@ parameters:
   # Server settings
   image:
     label: Server Image
-    description: Server Image
+    description: Operating system to use for your server.
     type: string
     default: Ubuntu 12.04 LTS (Precise Pangolin)
     constraints:
@@ -40,7 +40,9 @@ parameters:
 
   flavor:
     label: Server Size
-    description: Rackspace Cloud Server flavor
+    description: |
+      Rackspace Cloud Server flavor to use. The size is based on the amount of
+      RAM for the provisioned server.
     type: string
     default: 4 GB Performance
     constraints:
@@ -200,7 +202,7 @@ resources:
 outputs:
   private_key:
     value: { get_attr: [ssh_key, private_key] }
-    description: "Private Key"
+    description: "SSH Private Key"
 
   server_ip:
     value: { get_attr: [ghost_server, accessIPv4] }
@@ -221,11 +223,3 @@ outputs:
   ghost_user_password:
     value: { get_attr: [user_password, value] }
     description: "Ghost Password"
-
-  ghost_database_password:
-    value: { get_attr: [database_password, value] }
-    description: "Ghost Database Password"
-
-  mysql_root_password:
-    value: { get_attr: [mysql_root_password, value] }
-    description: "MySQL Root Password"
