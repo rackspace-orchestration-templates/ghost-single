@@ -22,6 +22,7 @@ parameter_groups:
   # chance this stack will fail to properly deploy.
   parameters:
   - database_name
+  - version
   - kitchen
   - chef_version
 
@@ -74,6 +75,15 @@ parameters:
     constraints:
     - allowed_pattern: "^[a-zA-Z0-9.-]{1,255}.[a-zA-Z]{2,15}$"
       description: Must be a valid domain name
+
+  version:
+    label: Ghost version
+    description: Ghost version to be used
+    type: string
+    default: latest
+    constraints:
+    - allowed_pattern: "^\\d{1,2}\\.\\d{1,2}\\.\\d{1,2}$|latest"
+      description: Must be a valid Ghost version.
 
   # Database and system user configuration
   database_name:
@@ -176,6 +186,8 @@ resources:
           db_user: { get_param: username }
           db_password: { get_attr: [database_password, value] }
           password: { get_attr: [user_password, value] }
+          domain: { get_param: domain }
+          ghost_version: { get_param: version }
         hollandbackup:
           main:
             backup_directory: "/var/lib/mysqlbackup"
