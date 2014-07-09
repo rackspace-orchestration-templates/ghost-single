@@ -14,7 +14,6 @@ parameter_groups:
   parameters:
   - domain
   - username
-  - version
 
 - label: rax-dev-params
   # These are parameters that will not be displayed in the portal. The purpose
@@ -23,6 +22,7 @@ parameter_groups:
   # chance this stack will fail to properly deploy.
   parameters:
   - database_name
+  - version
   - kitchen
   - chef_version
 
