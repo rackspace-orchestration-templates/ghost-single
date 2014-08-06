@@ -10,8 +10,6 @@ reach-info:
 hidden_outputs:
   - private_key
   - ghost_user_password
-  - ghost_database_password
-  - mysql_root_password
 abstract: |
   [Ghost](http://ghost.org/about/) installed with
   [Nginx](http://wiki.nginx.org/Main/), [Node.js](http://nodejs.org/), and
