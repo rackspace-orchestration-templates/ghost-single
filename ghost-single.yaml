@@ -35,10 +35,11 @@ parameters:
       Server image used for all servers that are created as a part of this
       deployment
     type: string
-    default: Ubuntu 12.04 LTS (Precise Pangolin)
+    default: Ubuntu 14.04 LTS (Trusty Tahr)
     constraints:
     - allowed_values:
       - Ubuntu 12.04 LTS (Precise Pangolin)
+      - Ubuntu 14.04 LTS (Trusty Tahr)
       description: Must be a supported operating system.
 
   flavor:
@@ -115,7 +116,7 @@ parameters:
   chef_version:
     description: Version of chef client to use
     type: string
-    default: 11.12.8
+    default: 11.16.0
 
 resources:
   # Random password generation

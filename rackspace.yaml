@@ -1,7 +1,7 @@
 schema-version: 1.0.0
 application-family: CMS
 application-name: Ghost
-application-version: 0.4
+application-version: 0.5.1
 flavor: Single Linux server
 flavor-weight: 1
 reach-info:
