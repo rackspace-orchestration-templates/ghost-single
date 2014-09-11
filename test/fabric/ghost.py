@@ -1,6 +1,16 @@
-from fabric.api import env, run, task
+import re
+from fabric.api import env, hide, run, task
 from envassert import detect, file, group, package, port, process, service, \
     user
+
+
+def ghost_is_responding():
+    with hide('running', 'stdout'):
+        homepage = run("wget --quiet --output-document - http://localhost/")
+        if re.search('Ghost', homepage):
+            return True
+        else:
+            return False
 
 
 @task
@@ -22,3 +32,4 @@ def check():
     assert process.is_up("mysqld")
     assert service.is_enabled("nginx")
     assert service.is_enabled("mysqld")
+    assert ghost_is_responding(), 'Ghost did not respond as expected'
