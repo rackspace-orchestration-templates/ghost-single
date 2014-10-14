@@ -88,6 +88,7 @@ parameters:
 
   # Database and system user configuration
   database_name:
+    label: Database Name
     description: Ghost database name
     type: string
     default: ghost
@@ -109,11 +110,13 @@ parameters:
         username length.
 
   kitchen:
+    label: Kitchen URL
     description: "URL for a git repo containing required cookbooks"
     type: string
     default: https://github.com/rackspace-orchestration-templates/ghost-single
 
   chef_version:
+    label: Chef Version
     description: Version of chef client to use
     type: string
     default: 11.16.0
