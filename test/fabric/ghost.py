@@ -2,6 +2,7 @@ import re
 from fabric.api import env, hide, run, task
 from envassert import detect, file, group, package, port, process, service, \
     user
+from hot.utils.test import get_artifacts
 
 
 def ghost_is_responding():
@@ -33,3 +34,9 @@ def check():
     assert service.is_enabled("nginx"), 'nginx service not enabled'
     assert service.is_enabled("mysqld"), 'mysqld service not enabled'
     assert ghost_is_responding(), 'Ghost did not respond as expected'
+
+
+@task
+def artifacts():
+    env.platform_family = detect.detect()
+    get_artifacts()
