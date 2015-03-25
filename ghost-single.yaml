@@ -162,7 +162,7 @@ resources:
 
   # Server resources
   ghost_server:
-    type: "Rackspace::Cloud::Server"
+    type: "OS::Nova::Server"
     properties:
       name: ghost
       flavor: { get_param: flavor }
