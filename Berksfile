@@ -9,7 +9,7 @@ cookbook 'database'
 cookbook 'firewall'
 cookbook 'git'
 cookbook 'hollandbackup',
-  git: 'https://github.com/brint/hollandbackup'
+  git: 'https://github.com/heat-cookbooks/hollandbackup'
 cookbook 'mysql'
 cookbook 'nginx'
 cookbook 'nodejs',
