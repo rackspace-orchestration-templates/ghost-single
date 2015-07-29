@@ -73,3 +73,7 @@ instructions: |
   WordPress may also be interested in this [WordPress
   plugin](http://wordpress.org/plugins/ghost/) to help migrate data from
   WordPress to Ghost.
+description: |
+  The latest version of [Ghost](http://ghost.org/about/) installed with
+  [Nginx](http://wiki.nginx.org/Main/), [Node.js](http://nodejs.org/) and
+  [MySQL 5.5](http://www.mysql.com/about/).
