@@ -11,9 +11,7 @@ hidden_outputs:
   - private_key
   - ghost_user_password
 abstract: |
-  [Ghost](http://ghost.org/about/) installed with
-  [Nginx](http://wiki.nginx.org/Main/), [Node.js](http://nodejs.org/), and
-  [MySQL 5.5](http://www.mysql.com/about/).
+  Ghost is an open-source blogging platform written in JavaScript.
 instructions: |
   #### Accessing Your Deployment
 
